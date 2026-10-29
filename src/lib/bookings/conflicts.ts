@@ -1,6 +1,4 @@
-
-import { and, eq, gt, lt, ne } from "drizzle-orm";
-
+import { and, eq, gt, inArray, lt } from "drizzle-orm";
 import { bookings } from "@/lib/db/app-schema";
 
 export function bookingConflictCondition(
@@ -10,7 +8,7 @@ export function bookingConflictCondition(
 ) {
   return and(
     eq(bookings.ownerId, ownerId),
-    ne(bookings.status, "cancelled"),
+    inArray(bookings.status, ["scheduled", "confirmed"]),
     lt(bookings.startsAt, endsAt),
     gt(bookings.endsAt, startsAt),
   );

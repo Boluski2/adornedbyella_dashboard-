@@ -15,6 +15,13 @@
       "when": 1793136872051,
       "tag": "0001_fixed_stepford_cuckoos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793274432886,
+      "tag": "0002_prevent_booking_overlaps",
+      "breakpoints": true
     }
   ]
 }

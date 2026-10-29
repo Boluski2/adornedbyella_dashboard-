@@ -204,4 +204,59 @@ describe("Booking conflict condition integration", () => {
 
     expect(conflicts).toHaveLength(0);
   });
+
+  it.each(["completed", "no_show"] as const)(
+    "ignores %s appointments",
+    async (status) => {
+      await db.insert(bookings).values({
+        id: `booking-test-status-${status}-${suffix}`,
+        ownerId,
+        clientId,
+        serviceId,
+        startsAt: new Date("2035-06-15T13:00:00.000Z"),
+        endsAt: new Date("2035-06-15T14:00:00.000Z"),
+        priceKobo: 500000,
+        status,
+      });
+
+      const conflicts = await db
+        .select({ id: bookings.id })
+        .from(bookings)
+        .where(
+          bookingConflictCondition(
+            ownerId,
+            new Date("2035-06-15T13:15:00.000Z"),
+            new Date("2035-06-15T13:45:00.000Z"),
+          ),
+        );
+
+      expect(conflicts).toHaveLength(0);
+    },
+  );
+
+  it("rejects overlapping active bookings at the database level", async () => {
+    await db.insert(bookings).values({
+      id: `booking-test-db-constraint-${suffix}`,
+      ownerId,
+      clientId,
+      serviceId,
+      startsAt: new Date("2035-06-15T15:00:00.000Z"),
+      endsAt: new Date("2035-06-15T16:00:00.000Z"),
+      priceKobo: 500000,
+      status: "scheduled",
+    });
+
+    await expect(
+      db.insert(bookings).values({
+        id: `booking-test-db-overlap-${suffix}`,
+        ownerId,
+        clientId,
+        serviceId,
+        startsAt: new Date("2035-06-15T15:30:00.000Z"),
+        endsAt: new Date("2035-06-15T16:30:00.000Z"),
+        priceKobo: 500000,
+        status: "confirmed",
+      }),
+    ).rejects.toThrow();
+  });
 });
