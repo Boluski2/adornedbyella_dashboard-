@@ -1,4 +1,5 @@
-﻿import { defineConfig } from "vitest/config";
+﻿
+import { defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
@@ -11,5 +12,6 @@ export default defineConfig({
     restoreMocks: true,
     testTimeout: 20000,
     hookTimeout: 20000,
+    fileParallelism: false,
   },
 });

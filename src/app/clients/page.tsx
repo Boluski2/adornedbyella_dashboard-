@@ -2,14 +2,23 @@
 import { headers } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, ilike, or } from "drizzle-orm";
 
 import { auth } from "@/lib/db/auth";
 import { db } from "@/lib/db";
 import { clients } from "@/lib/db/app-schema";
+import ClientForm from "./client-form";
+import ClientEditForm from "./client-edit-form";
+import ClientDeleteButton from "./client-delete-button";
 
-export default async function ClientsPage() {
-  await connection();
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const searchTerm =
+  typeof params.q === "string" ? params.q.trim() : "";
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -29,7 +38,18 @@ export default async function ClientsPage() {
       createdAt: clients.createdAt,
     })
     .from(clients)
-    .where(eq(clients.ownerId, session.user.id))
+    .where(
+  and(
+    eq(clients.ownerId, session.user.id),
+    searchTerm
+      ? or(
+          ilike(clients.name, `%${searchTerm}%`),
+          ilike(clients.email, `%${searchTerm}%`),
+          ilike(clients.phone, `%${searchTerm}%`),
+        )
+      : undefined,
+        ),
+        )
     .orderBy(desc(clients.createdAt));
 
   return (
@@ -53,6 +73,29 @@ export default async function ClientsPage() {
             <p className="mt-2 text-sm text-[#827873]">
               Keep your client details organized in one place.
             </p>
+            <form action="/clients" method="GET" className="mt-5 flex max-w-lg gap-2">
+            <input
+                type="search"
+                name="q"
+                placeholder="Search by name, email, or phone..."
+                defaultValue={searchTerm}
+                className="min-w-0 flex-1 rounded-xl border border-[#eae4df] bg-white px-4 py-3 text-sm outline-none focus:border-[#a65d69]"
+            />
+            <button
+                type="submit"
+                className="rounded-xl bg-[#a65d69] px-5 py-3 text-sm font-medium text-white hover:bg-[#914b57]"
+            >
+                Search
+            </button>
+            {searchTerm && (
+                <a
+                href="/clients"
+                className="rounded-xl border border-[#eae4df] px-4 py-3 text-sm font-medium hover:bg-white"
+                >
+                Clear
+                </a>
+            )}
+            </form>
           </div>
 
           <p className="rounded-full bg-[#f5e8e9] px-4 py-2 text-sm font-medium text-[#914b57]">
@@ -61,6 +104,22 @@ export default async function ClientsPage() {
           </p>
         </div>
 
+        <section className="mt-8 rounded-2xl border border-[#eae4df] bg-white p-6 sm:p-8">
+        <div className="mb-6">
+            <p className="text-sm font-medium text-[#a65d69]">
+            NEW CLIENT
+            </p>
+            <h2 className="mt-2 text-xl font-semibold">
+            Add a client
+            </h2>
+            <p className="mt-2 text-sm text-[#827873]">
+            Save contact details and notes for a new customer.
+            </p>
+        </div>
+
+        <ClientForm />
+        </section>
+
         <section className="mt-8 overflow-hidden rounded-2xl border border-[#eae4df] bg-white">
           {clientRecords.length === 0 ? (
             <div className="px-6 py-16 text-center">
@@ -68,18 +127,30 @@ export default async function ClientsPage() {
                 ♙
               </div>
               <h2 className="mt-5 text-lg font-semibold">
-                No clients yet
-              </h2>
-              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#827873]">
-                Your client records will appear here when you start
-                adding customers to GlamTrack.
-              </p>
+                {searchTerm ? "No clients found" : "No clients yet"}
+                </h2>
+
+                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#827873]">
+                {searchTerm
+                    ? `No clients match "${searchTerm}". Try another name, email, or phone number.`
+                    : "Your client records will appear here when you start adding customers to GlamTrack."}
+                </p>
+
+                {searchTerm && (
+                <a
+                    href="/clients"
+                    className="mt-5 inline-flex rounded-xl bg-[#a65d69] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#914b57]"
+                >
+                    Clear search
+                </a>
+                )}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[650px] text-left text-sm">
                 <thead className="border-b border-[#eae4df] bg-[#fcfbf9] text-[#827873]">
                   <tr>
+                    <th className="px-6 py-4 font-medium">Actions</th>
                     <th className="px-6 py-4 font-medium">Name</th>
                     <th className="px-6 py-4 font-medium">Email</th>
                     <th className="px-6 py-4 font-medium">Phone</th>
@@ -101,6 +172,15 @@ export default async function ClientsPage() {
                       <td className="px-6 py-4 text-[#827873]">
                         {client.createdAt.toLocaleDateString("en-NG")}
                       </td>
+                     <td className="px-6 py-4 align-top">
+                    <div className="flex flex-wrap items-start gap-2">
+                        <ClientEditForm client={client} />
+                        <ClientDeleteButton
+                        clientId={client.id}
+                        clientName={client.name}
+                        />
+                    </div>
+                    </td>
                     </tr>
                   ))}
                 </tbody>
