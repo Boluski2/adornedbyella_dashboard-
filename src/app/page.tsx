@@ -17,6 +17,7 @@ import {
   getClientInsights,
   getServicePerformance,
 } from "@/lib/db/analytics";
+import { getBusinessProfile } from "@/lib/db/business-profiles";
 
 
 function MetricCard({
@@ -51,11 +52,17 @@ export default async function Home() {
     headers: await headers(),
   });
 
-  if (!session) {
-    redirect("/sign-in");
-  }
+if (!session) {
+  redirect("/sign-in");
+}
 
-  const ownerId = session.user.id;
+const ownerId = session.user.id;
+
+const businessProfile = await getBusinessProfile(ownerId);
+
+if (!businessProfile) {
+  redirect("/onboarding/profile");
+}
   const now = new Date();
   const lagosHour = Number(
     new Intl.DateTimeFormat("en-GB", {
@@ -220,7 +227,11 @@ export default async function Home() {
     }).format(kobo / 100);
 
   return (
-    <DashboardShell>
+    <DashboardShell
+      brandName={businessProfile.brandName}
+      slogan={businessProfile.slogan}
+      logoUrl={businessProfile.logoUrl}
+    >
       <main className="min-w-0 p-5 sm:p-8 md:p-10">
 
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#eae4df] pb-7">
@@ -445,7 +456,7 @@ export default async function Home() {
         </section>
 
         <footer className="py-8 text-center text-xs text-[#a39a94]">
-          AdornedByElla · Built for your beauty business
+          {businessProfile.brandName} · {businessProfile.slogan}
         </footer>
 
       </main>

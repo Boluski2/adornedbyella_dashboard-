@@ -1,0 +1,1 @@
+ALTER TABLE "business_profiles" ALTER COLUMN "website_title" DROP NOT NULL;

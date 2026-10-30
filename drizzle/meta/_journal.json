@@ -36,6 +36,20 @@
       "when": 1793354437414,
       "tag": "0004_natural_warpath",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793363644372,
+      "tag": "0005_sparkling_metal_master",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793368289578,
+      "tag": "0006_rich_phil_sheldon",
+      "breakpoints": true
     }
   ]
 }

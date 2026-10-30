@@ -176,3 +176,34 @@ export const bookings = pgTable(
     ),
   ],
 );
+
+
+export const businessProfiles = pgTable(
+  "business_profiles",
+  {
+    id: text("id").primaryKey(),
+
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" })
+      .unique(),
+
+    brandName: text("brand_name").notNull(),
+
+    slogan: text("slogan"),
+
+    websiteTitle: text("website_title"),
+
+    description: text("description"),
+
+    logoUrl: text("logo_url"),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+);

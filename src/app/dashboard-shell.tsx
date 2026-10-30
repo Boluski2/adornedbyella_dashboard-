@@ -10,12 +10,19 @@ const navigation = [
   { label: "Clients", icon: "♡", href: "/clients" },
   { label: "Services", icon: "✳", href: "/services" },
   { label: "Analytics", icon: "⌁", href: "/analytics" },
+  { label: "Profile", icon: "⚙", href: "/profile" },
 ];
 
 export default function DashboardShell({
   children,
+  brandName,
+  slogan,
+  logoUrl,
 }: {
   children: ReactNode;
+  brandName: string;
+  slogan: string | null;
+  logoUrl: string | null;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -42,19 +49,27 @@ export default function DashboardShell({
           <Link
             href="/"
             onClick={() => setMobileOpen(false)}
-            aria-label="AdornedByElla overview"
+            aria-label={`${brandName} overview`}
             className="flex min-w-0 items-center gap-3"
           >
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={`${brandName} logo`}
+              className="h-10 w-10 shrink-0 rounded-xl object-cover"
+            />
+          ) : (
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#a65d69] text-xl font-semibold text-white">
-              A
+              {brandName.charAt(0).toUpperCase()}
             </span>
+          )}
             {showLabels && (
               <span className="min-w-0">
                 <span className="block truncate text-base font-semibold tracking-tight">
-                  AdornedByElla
+                  {brandName}
                 </span>
                 <span className="block text-xs text-[#827873]">
-                  Beauty business manager
+                  {slogan || "Beauty business manager"}
                 </span>
               </span>
             )}
@@ -125,7 +140,7 @@ export default function DashboardShell({
         <div className="mt-auto border-t border-[#eae4df] pt-4">
           <SignOutButton compact={!showLabels} />
           {showLabels && (
-            <p className="mt-4 text-xs text-[#a39a94]">AdornedByElla</p>
+            <p className="mt-4 truncate text-xs text-[#a39a94]">{brandName}</p>
           )}
         </div>
       </aside>
@@ -161,7 +176,7 @@ export default function DashboardShell({
             </button>
           )}
           <span className="truncate text-sm font-semibold text-[#272321] md:hidden">
-            AdornedByElla
+            {brandName}
           </span>
         </div>
         {children}
