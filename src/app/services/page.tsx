@@ -8,6 +8,8 @@ import { auth } from "@/lib/db/auth";
 import { db } from "@/lib/db";
 import { services } from "@/lib/db/app-schema";
 import ServiceForm from "./service-form";
+import ServiceEditForm from "./service-edit-form";
+import ServiceStatusButton from "./service-status-button";
 
 export default async function ServicesPage() {
   await connection();
@@ -122,6 +124,13 @@ export default async function ServicesPage() {
                       {formatNaira(service.priceKobo)}
                     </p>
                   </div>
+                  <div className="mt-5 flex flex-wrap gap-2 border-t border-[#f0ebe7] pt-4">
+                <ServiceEditForm service={service} />
+                <ServiceStatusButton
+                    serviceId={service.id}
+                    isActive={service.isActive}
+                />
+                </div>
                 </article>
               ))}
             </div>

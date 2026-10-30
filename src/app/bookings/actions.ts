@@ -16,6 +16,7 @@ import { auth } from "@/lib/db/auth";
 import { db } from "@/lib/db";
 import { bookings, clients, services } from "@/lib/db/app-schema";
 import { bookingConflictCondition } from "@/lib/bookings/conflicts";
+import { NeonDbError } from "@neondatabase/serverless";
 
 export type BookingActionState = {
   error?: string;
@@ -133,12 +134,23 @@ export async function createBooking(
       status: "scheduled",
       notes: parsed.data.notes?.trim() || null,
     });
-  } catch (error) {
+   } catch (error) {
+    if (
+      error instanceof NeonDbError &&
+      error.code === "23P01" &&
+      error.constraint === "bookings_no_active_overlap"
+    ) {
+      return {
+        error: "This time overlaps another booking. Choose a different time.",
+      };
+    }
+
     console.error("Failed to create booking:", error);
     return {
       error: "We couldn't save this booking. Please try again.",
     };
   }
+
 
   revalidatePath("/bookings");
   revalidatePath("/clients");

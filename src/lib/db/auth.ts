@@ -7,6 +7,7 @@ import {
   session,
   account,
   verification,
+  rateLimit,
 } from "./auth-schema";
 
 const secret = process.env.BETTER_AUTH_SECRET;
@@ -30,9 +31,26 @@ export const auth = betterAuth({
       session,
       account,
       verification,
+      rateLimit,
     },
   }),
   emailAndPassword: {
     enabled: true,
   },
+  rateLimit: {
+  enabled: true,
+  storage: "database",
+  window: 60,
+  max: 100,
+  customRules: {
+    "/sign-in/email": {
+      window: 60,
+      max: 5,
+    },
+    "/sign-up/email": {
+      window: 60,
+      max: 5,
+    },
+  },
+},
 });

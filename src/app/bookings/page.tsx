@@ -1,5 +1,5 @@
 
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
@@ -10,6 +10,8 @@ import { bookings, clients, services } from "@/lib/db/app-schema";
 import BookingForm from "./booking-form";
 import CancelBookingButton from "./cancel-booking-button";
 import BookingStatusControl from "./booking-status-control";
+import BookingCalendar from "./booking-calendar";
+import RecentBookingsFilter from "./recent-bookings-filter";
 
 export default async function BookingsPage() {
   await connection();
@@ -42,7 +44,12 @@ export default async function BookingsPage() {
         priceKobo: services.priceKobo,
       })
       .from(services)
-      .where(eq(services.ownerId, ownerId))
+      .where(
+        and(
+            eq(services.ownerId, ownerId),
+            eq(services.isActive, true),
+        ),
+        )
       .orderBy(asc(services.name)),
 
     db
@@ -59,9 +66,18 @@ export default async function BookingsPage() {
       .innerJoin(clients, eq(bookings.clientId, clients.id))
       .innerJoin(services, eq(bookings.serviceId, services.id))
       .where(eq(bookings.ownerId, ownerId))
-      .orderBy(desc(bookings.startsAt))
-      .limit(20),
+      .orderBy(desc(bookings.startsAt)),
   ]);
+
+  const calendarBookings = bookingRows.map((booking) => ({
+  id: booking.id,
+  startsAt: new Date(booking.startsAt).toISOString(),
+  endsAt: new Date(booking.endsAt).toISOString(),
+  clientName: booking.clientName,
+  serviceName: booking.serviceName,
+  status: booking.status,
+  priceKobo: booking.priceKobo,
+    }));
 
   const formatPrice = (priceKobo: number) =>
     new Intl.NumberFormat("en-NG", {
@@ -89,7 +105,11 @@ export default async function BookingsPage() {
           Schedule makeup appointments and keep track of upcoming clients.
         </p>
       </header>
-
+        <BookingCalendar
+        bookings={calendarBookings}
+        clients={clientOptions}
+        services={serviceOptions}
+        />
       <section className="rounded-2xl border border-[#eae4df] bg-white p-6 shadow-sm md:p-8">
         <h2 className="text-xl font-semibold text-[#272321]">
           Create a booking
@@ -124,59 +144,18 @@ export default async function BookingsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[650px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-[#eae4df] text-[#827873]">
-                  <th className="px-3 py-3 font-medium">Client</th>
-                  <th className="px-3 py-3 font-medium">Service</th>
-                  <th className="px-3 py-3 font-medium">Date & time</th>
-                  <th className="px-3 py-3 font-medium">Price</th>
-                  <th className="px-3 py-3 font-medium">Status</th>
-                  <th className="px-3 py-3 font-medium">Actions</th>
-                  <th className="px-3 py-3 font-medium">Manage status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookingRows.map((booking) => (
-                  <tr
-                    key={booking.id}
-                    className="border-b border-[#f2eeea] last:border-0"
-                  >
-                    <td className="px-3 py-4 font-medium text-[#272321]">
-                      {booking.clientName}
-                    </td>
-                    <td className="px-3 py-4 text-[#514a46]">
-                      {booking.serviceName}
-                    </td>
-                    <td className="px-3 py-4 text-[#514a46]">
-                      {formatDate(new Date(booking.startsAt))}
-                    </td>
-                    <td className="px-3 py-4 text-[#514a46]">
-                      {formatPrice(booking.priceKobo)}
-                    </td>
-                    <td className="px-3 py-4">
-                      <span className="rounded-full bg-[#f5e8e9] px-3 py-1 text-xs font-medium capitalize text-[#8f4b57]">
-                        {booking.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-3 py-4">
-                    {booking.status !== "cancelled" &&
-                        booking.status !== "completed" && (
-                        <CancelBookingButton bookingId={booking.id} />
-                        )}
-                    </td>
-                    <td className="px-3 py-4">
-                    <BookingStatusControl
-                        bookingId={booking.id}
-                        status={booking.status as "scheduled" | "confirmed" | "completed" | "cancelled" | "no_show"}
-                    />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            <RecentBookingsFilter
+            bookings={bookingRows.slice(0, 20).map((booking) => ({
+                ...booking,
+                startsAt: new Date(booking.startsAt).toISOString(),
+                status: booking.status as
+                | "scheduled"
+                | "confirmed"
+                | "completed"
+                | "cancelled"
+                | "no_show",
+            }))}
+            />
         )}
       </section>
     </main>

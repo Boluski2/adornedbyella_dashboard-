@@ -40,15 +40,19 @@ function SubmitButton() {
 export default function BookingForm({
   clients,
   services,
+  initialDateTime,
 }: {
   clients: ClientOption[];
   services: ServiceOption[];
-}) {
+  initialDateTime?: string;
+})  {
   const [state, formAction] = useActionState(
     createBooking,
     initialState,
   );
-  const [startsAtLocal, setStartsAtLocal] = useState("");
+  const [startsAtLocal, setStartsAtLocal] = useState(
+  initialDateTime ?? "",
+  );
 
   useEffect(() => {
     if (state.success) {

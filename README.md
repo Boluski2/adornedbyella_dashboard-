@@ -2,17 +2,20 @@
 
 AdornedByElla is a beauty-business management app branded in the interface as **GlamTrack**. It is built for beauty professionals to manage client information, appointments, and services.
 
-The app includes account registration and sign-in, an authenticated dashboard, and database-backed client, service, and booking pages. Client and service records are scoped to the signed-in account. Dashboard summary figures and appointment rows are still sample data.
+The app includes account registration and sign-in, an authenticated dashboard, and database-backed client, service, booking, and analytics pages. Business records and dashboard metrics are scoped to the signed-in account.
 
 ## Features
 
 - Email and password registration, sign-in, and sign-out with Better Auth.
+- Database-backed rate limiting for authentication requests, with tighter limits on sign-in and registration.
 - Server-side session checks for protected pages and owner-scoped database queries.
 - Create, search, edit, and delete client records.
-- Create and view beauty services, including duration and price.
+- Create and edit beauty services, including duration and price; deactivate and reactivate services without removing booking history.
 - Schedule bookings using an existing client and service; booking duration and price are taken from the selected service.
 - Reject booking times that overlap an existing non-cancelled appointment for the same account.
-- View recent bookings, cancel eligible bookings, and update booking status through allowed transitions.
+- View bookings in a calendar and filter recent bookings; cancel eligible bookings and update booking status through allowed transitions.
+- View account-specific dashboard metrics and upcoming appointments.
+- Review 12 months of revenue, booking, service, and client analytics.
 - PostgreSQL persistence through Neon and Drizzle ORM.
 - Drizzle SQL migrations for authentication and application tables.
 - A database health endpoint at `GET /api/health`.
@@ -103,10 +106,11 @@ For local development, always verify that the `DATABASE_URL` selected for a migr
 
 | Route | Purpose | Access |
 | --- | --- | --- |
-| `/` | Dashboard with overview metrics and upcoming appointment preview. The displayed records are sample data. | Signed-in users; unauthenticated requests redirect to `/sign-in`. |
+| `/` | Dashboard with account-specific overview metrics and upcoming appointment preview. | Signed-in users; unauthenticated requests redirect to `/sign-in`. |
 | `/clients` | Search, add, view, edit, and delete the signed-in user's client records. | Signed-in users. |
-| `/services` | Add a service and view the signed-in user's service menu. | Signed-in users. |
-| `/bookings` | Schedule an appointment, view up to 20 recent bookings, cancel eligible bookings, and update status. | Signed-in users. |
+| `/services` | Add, edit, activate, and deactivate the signed-in user's services. | Signed-in users. |
+| `/bookings` | Schedule appointments, view a calendar and up to 20 filtered recent bookings, cancel eligible bookings, and update status. | Signed-in users. |
+| `/analytics` | View revenue, booking, service performance, and client insights for the last 12 months. | Signed-in users. |
 | `/sign-up` | Create an account with a name, email, and password. | Public. |
 | `/sign-in` | Sign in with email and password. | Public. |
 | `GET /api/health` | Runs a database query and reports connection status. Returns HTTP 503 if the database check fails. | Public. |
@@ -134,7 +138,7 @@ npm run lint
 
 Integration tests create and authenticate a test user in the isolated test database, then remove that user and its related authentication rows. They require `DATABASE_URL_TEST`, `DATABASE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, and an already-migrated test database. Never set the test database URL to the production database.
 
-The unit suite includes booking status transition checks. Integration coverage includes authentication, booking overlap query behavior, and safeguards against accidentally using the main database. Integration tests use only `DATABASE_URL_TEST` after confirming it differs from `DATABASE_URL`.
+The unit suite includes booking status transition checks and authentication configuration checks. Integration coverage includes authentication, booking overlap query behavior, analytics, and safeguards against accidentally using the main database. Integration tests use only `DATABASE_URL_TEST` after confirming it differs from `DATABASE_URL`.
 
 ## Project layout
 
@@ -150,14 +154,21 @@ src/
       client-form.tsx          Create client form
       client-edit-form.tsx     Edit client form
       client-delete-button.tsx Delete client control
+    analytics/
+      page.tsx                 Account-specific business analytics
+      analytics-charts.tsx     Revenue, booking, and client charts
     services/
       page.tsx                 Authenticated service menu
-      actions.ts               Service creation server action
+      actions.ts               Service create, update, and status actions
       service-form.tsx         Create service form
+      service-edit-form.tsx    Edit service form
+      service-status-button.tsx Activate or deactivate a service
     bookings/
-      page.tsx                 Authenticated booking list
+      page.tsx                 Authenticated booking calendar and recent list
       actions.ts               Booking create, cancel, and status actions
       booking-form.tsx         Create booking form
+      booking-calendar.tsx     Booking calendar
+      recent-bookings-filter.tsx Filterable recent booking list
       booking-status-control.tsx Booking status control
       cancel-booking-button.tsx Cancel booking control
     sign-in/page.tsx           Sign-in form
@@ -173,6 +184,7 @@ src/
       auth-schema.ts           Better Auth Drizzle schema
       auth.ts                  Server-side Better Auth configuration
       index.ts                 Neon and Drizzle database connection
+      analytics.ts             Account-scoped analytics queries
 drizzle/                        SQL migrations and migration metadata
 tests/                          Unit and integration tests
 drizzle.config.ts               Drizzle Kit configuration
@@ -186,4 +198,4 @@ Deploy as a Next.js application on a Node.js-compatible platform. Configure `DAT
 
 ## Current scope
 
-Client management supports creating, searching, editing, and deleting owner-scoped records. Services can be created and viewed; service editing and deletion are not currently available. Bookings can be created, listed, cancelled, and moved through allowed statuses. Booking creation checks for overlapping non-cancelled appointments for the same account. The dashboard's figures and appointment preview remain sample data, and the dashboard booking buttons are placeholders. There is not yet a calendar or availability-management interface.
+Client management supports creating, searching, editing, and deleting owner-scoped records. Services can be created and edited, and can be deactivated or reactivated while preserving their booking history. Bookings can be created, browsed in a calendar, filtered in the recent-bookings list, cancelled, and moved through allowed statuses. Booking creation checks for overlapping non-cancelled appointments for the same account. Dashboard and analytics figures are calculated from the signed-in account's database records. The dashboard booking buttons remain placeholders; there is no availability-management interface yet.

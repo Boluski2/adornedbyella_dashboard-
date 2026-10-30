@@ -1,6 +1,5 @@
 
 import { headers } from "next/headers";
-import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { and, desc, eq, ilike, or } from "drizzle-orm";
 
@@ -18,7 +17,7 @@ export default async function ClientsPage({
 }) {
   const params = await searchParams;
   const searchTerm =
-  typeof params.q === "string" ? params.q.trim() : "";
+    typeof params.q === "string" ? params.q.trim() : "";
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -39,17 +38,17 @@ export default async function ClientsPage({
     })
     .from(clients)
     .where(
-  and(
-    eq(clients.ownerId, session.user.id),
-    searchTerm
-      ? or(
-          ilike(clients.name, `%${searchTerm}%`),
-          ilike(clients.email, `%${searchTerm}%`),
-          ilike(clients.phone, `%${searchTerm}%`),
-        )
-      : undefined,
-        ),
-        )
+      and(
+        eq(clients.ownerId, session.user.id),
+        searchTerm
+          ? or(
+              ilike(clients.name, `%${searchTerm}%`),
+              ilike(clients.email, `%${searchTerm}%`),
+              ilike(clients.phone, `%${searchTerm}%`),
+            )
+          : undefined,
+      ),
+    )
     .orderBy(desc(clients.createdAt));
 
   return (
@@ -67,87 +66,110 @@ export default async function ClientsPage({
             <p className="text-sm font-medium text-[#a65d69]">
               YOUR BUSINESS
             </p>
+
             <h1 className="mt-2 text-3xl font-semibold tracking-tight">
               Clients
             </h1>
+
             <p className="mt-2 text-sm text-[#827873]">
               Keep your client details organized in one place.
             </p>
-            <form action="/clients" method="GET" className="mt-5 flex max-w-lg gap-2">
-            <input
+
+            <form
+              action="/clients"
+              method="GET"
+              className="mt-5 flex max-w-lg flex-wrap gap-2"
+            >
+              <input
                 type="search"
                 name="q"
                 placeholder="Search by name, email, or phone..."
                 defaultValue={searchTerm}
                 className="min-w-0 flex-1 rounded-xl border border-[#eae4df] bg-white px-4 py-3 text-sm outline-none focus:border-[#a65d69]"
-            />
-            <button
+              />
+
+              <button
                 type="submit"
                 className="rounded-xl bg-[#a65d69] px-5 py-3 text-sm font-medium text-white hover:bg-[#914b57]"
-            >
+              >
                 Search
-            </button>
-            {searchTerm && (
+              </button>
+
+              {searchTerm && (
                 <a
-                href="/clients"
-                className="rounded-xl border border-[#eae4df] px-4 py-3 text-sm font-medium hover:bg-white"
+                  href="/clients"
+                  className="rounded-xl border border-[#eae4df] px-4 py-3 text-sm font-medium hover:bg-white"
                 >
-                Clear
+                  Clear
                 </a>
-            )}
+              )}
             </form>
           </div>
 
           <p className="rounded-full bg-[#f5e8e9] px-4 py-2 text-sm font-medium text-[#914b57]">
             {clientRecords.length}{" "}
             {clientRecords.length === 1 ? "client" : "clients"}
+            {searchTerm ? " found" : " registered"}
           </p>
         </div>
 
         <section className="mt-8 rounded-2xl border border-[#eae4df] bg-white p-6 sm:p-8">
-        <div className="mb-6">
+          <div className="mb-6">
             <p className="text-sm font-medium text-[#a65d69]">
-            NEW CLIENT
+              NEW CLIENT
             </p>
-            <h2 className="mt-2 text-xl font-semibold">
-            Add a client
-            </h2>
-            <p className="mt-2 text-sm text-[#827873]">
-            Save contact details and notes for a new customer.
-            </p>
-        </div>
 
-        <ClientForm />
+            <h2 className="mt-2 text-xl font-semibold">
+              Add a client
+            </h2>
+
+            <p className="mt-2 text-sm text-[#827873]">
+              Save contact details and notes for a new customer.
+            </p>
+          </div>
+
+          <ClientForm />
         </section>
 
         <section className="mt-8 overflow-hidden rounded-2xl border border-[#eae4df] bg-white">
+          <div className="border-b border-[#eae4df] px-6 py-5">
+            <h2 className="text-lg font-semibold">
+              Client directory
+            </h2>
+
+            <p className="mt-1 text-sm text-[#827873]">
+              View and manage your customer records.
+            </p>
+          </div>
+
           {clientRecords.length === 0 ? (
             <div className="px-6 py-16 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f5e8e9] text-2xl text-[#914b57]">
                 ♙
               </div>
+
               <h2 className="mt-5 text-lg font-semibold">
                 {searchTerm ? "No clients found" : "No clients yet"}
-                </h2>
+              </h2>
 
-                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#827873]">
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#827873]">
                 {searchTerm
-                    ? `No clients match "${searchTerm}". Try another name, email, or phone number.`
-                    : "Your client records will appear here when you start adding customers to GlamTrack."}
-                </p>
+                  ? `No clients match "${searchTerm}". Try another name, email, or phone number.`
+                  : "Your client records will appear here when you start adding customers to GlamTrack."}
+              </p>
 
-                {searchTerm && (
+              {searchTerm && (
                 <a
-                    href="/clients"
-                    className="mt-5 inline-flex rounded-xl bg-[#a65d69] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#914b57]"
+                  href="/clients"
+                  className="mt-5 inline-flex rounded-xl bg-[#a65d69] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#914b57]"
                 >
-                    Clear search
+                  Clear search
                 </a>
-                )}
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[650px] text-left text-sm">
+              <table className="w-full min-w-[700px] text-left text-sm">
                 <thead className="border-b border-[#eae4df] bg-[#fcfbf9] text-[#827873]">
                   <tr>
                     <th className="px-6 py-4 font-medium">Actions</th>
@@ -157,30 +179,44 @@ export default async function ClientsPage({
                     <th className="px-6 py-4 font-medium">Added</th>
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-[#f0ebe7]">
                   {clientRecords.map((client) => (
-                    <tr key={client.id} className="hover:bg-[#fcfbf9]">
+                    <tr
+                      key={client.id}
+                      className="hover:bg-[#fcfbf9]"
+                    >
+                      <td className="px-6 py-4 align-top">
+                        <div className="flex flex-wrap items-start gap-2">
+                          <ClientEditForm client={client} />
+
+                          <ClientDeleteButton
+                            clientId={client.id}
+                            clientName={client.name}
+                          />
+                        </div>
+                      </td>
+
                       <td className="px-6 py-4 font-medium">
                         {client.name}
                       </td>
+
                       <td className="px-6 py-4 text-[#827873]">
                         {client.email || "—"}
                       </td>
+
                       <td className="px-6 py-4 text-[#827873]">
                         {client.phone || "—"}
                       </td>
+
                       <td className="px-6 py-4 text-[#827873]">
-                        {client.createdAt.toLocaleDateString("en-NG")}
+                        {client.createdAt.toLocaleDateString("en-NG", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          timeZone: "Africa/Lagos",
+                        })}
                       </td>
-                     <td className="px-6 py-4 align-top">
-                    <div className="flex flex-wrap items-start gap-2">
-                        <ClientEditForm client={client} />
-                        <ClientDeleteButton
-                        clientId={client.id}
-                        clientName={client.name}
-                        />
-                    </div>
-                    </td>
                     </tr>
                   ))}
                 </tbody>
@@ -188,6 +224,10 @@ export default async function ClientsPage({
             </div>
           )}
         </section>
+
+        <footer className="py-8 text-center text-xs text-[#a39a94]">
+          GlamTrack · Built for your beauty business
+        </footer>
       </div>
     </main>
   );
