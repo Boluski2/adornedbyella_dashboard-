@@ -2,18 +2,21 @@ import { headers } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/db/auth";
-import { NewBookingButton, ViewAllButton } from "./dashboard-actions";
-import SignOutButton from "./sign-out-button";
+import { ViewAllButton } from "./dashboard-actions";
+import DashboardShell from "./dashboard-shell";
 import { and, asc, count, eq, gte, lt, sum, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { bookings, clients, services } from "@/lib/db/app-schema";
-
-const navigation = [
-  { label: "Overview", icon: "◫", active: true },
-  { label: "Bookings", icon: "▦", active: false },
-  { label: "Clients", icon: "♙", active: false },
-  { label: "Services", icon: "✳", active: false },
-];
+import Link from "next/link";
+import BookingCalendar from "./bookings/booking-calendar";
+import AnalyticsCharts from "./analytics/analytics-charts";
+import OverviewCreateActions from "./overview-create-actions";
+import {
+  getMonthlyBookingStats,
+  getMonthlyRevenue,
+  getClientInsights,
+  getServicePerformance,
+} from "@/lib/db/analytics";
 
 
 function MetricCard({
@@ -54,6 +57,19 @@ export default async function Home() {
 
   const ownerId = session.user.id;
   const now = new Date();
+  const lagosHour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Africa/Lagos",
+      hour: "2-digit",
+      hourCycle: "h23",
+    }).format(now),
+  );
+  const greeting =
+    lagosHour < 12
+      ? "Good morning"
+      : lagosHour < 17
+        ? "Good afternoon"
+        : "Good evening";
 
   // Use Lagos business time for today's appointments and monthly revenue.
   const businessDate = new Intl.DateTimeFormat("en-CA", {
@@ -76,6 +92,13 @@ export default async function Home() {
     revenueResult,
     servicesResult,
     upcomingBookings,
+    clientOptions,
+    serviceOptions,
+    calendarRows,
+    revenueAnalytics,
+    bookingAnalytics,
+    clientAnalytics,
+    serviceAnalytics,
   ] = await Promise.all([
     db
       .select({ value: count() })
@@ -148,6 +171,40 @@ export default async function Home() {
       )
       .orderBy(asc(bookings.startsAt))
       .limit(5),
+    db
+      .select({ id: clients.id, name: clients.name })
+      .from(clients)
+      .where(eq(clients.ownerId, ownerId))
+      .orderBy(asc(clients.name)),
+    db
+      .select({
+        id: services.id,
+        name: services.name,
+        durationMinutes: services.durationMinutes,
+        priceKobo: services.priceKobo,
+      })
+      .from(services)
+      .where(and(eq(services.ownerId, ownerId), eq(services.isActive, true)))
+      .orderBy(asc(services.name)),
+    db
+      .select({
+        id: bookings.id,
+        startsAt: bookings.startsAt,
+        endsAt: bookings.endsAt,
+        status: bookings.status,
+        priceKobo: bookings.priceKobo,
+        clientName: clients.name,
+        serviceName: services.name,
+      })
+      .from(bookings)
+      .innerJoin(clients, and(eq(bookings.clientId, clients.id), eq(bookings.ownerId, clients.ownerId)))
+      .innerJoin(services, and(eq(bookings.serviceId, services.id), eq(bookings.ownerId, services.ownerId)))
+      .where(eq(bookings.ownerId, ownerId))
+      .orderBy(asc(bookings.startsAt)),
+    getMonthlyRevenue(ownerId),
+    getMonthlyBookingStats(ownerId),
+    getClientInsights(ownerId),
+    getServicePerformance(ownerId),
   ]);
 
   const todayAppointments = todayResult[0]?.value ?? 0;
@@ -163,96 +220,28 @@ export default async function Home() {
     }).format(kobo / 100);
 
   return (
-    <main className="min-h-screen bg-[#faf8f5] text-[#272321] md:flex">
-      <aside className="border-b border-[#eae4df] bg-white p-5 md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col md:border-r md:border-b-0">
-        <a href="/" className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#a65d69] text-xl text-white">
-            G
-          </span>
-          <span>
-            <span className="block text-lg font-semibold tracking-tight">
-              GlamTrack
-            </span>
-            <span className="block text-xs text-[#827873]">
-              Beauty business manager
-            </span>
-          </span>
-        </a>
+    <DashboardShell>
+      <main className="min-w-0 p-5 sm:p-8 md:p-10">
 
-        <p className="mb-3 mt-10 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#a39a94]">
-          Workspace
-        </p>
-
-        <nav className="flex gap-2 overflow-x-auto md:flex-col">
-          {navigation.map((item) => (
-            <a
-              key={item.label}
-              href={item.active ? "/" : "#"}
-              aria-current={item.active ? "page" : undefined}
-              className={`flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm transition ${
-                item.active
-                  ? "bg-[#f5e8e9] font-medium text-[#914b57]"
-                  : "text-[#716964] hover:bg-[#faf8f5]"
-              }`}
-            >
-              <span className="text-base">{item.icon}</span>
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="mt-8 hidden rounded-2xl bg-[#faf5f1] p-4 md:block">
-          <p className="text-sm font-medium">Your business, organized.</p>
-          <p className="mt-2 text-xs leading-5 text-[#827873]">
-            Keep appointments, client details, and services in one place.
-          </p>
-        </div>
-          <div className="mt-auto hidden border-t border-[#eae4df] pt-5 md:block">
-            <a
-              href="#settings"
-              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#716964] hover:bg-[#faf8f5]"
-            >
-              <span>⚙</span>
-              Settings
-            </a>
-
-            <div className="mt-2">
-              <SignOutButton />
-            </div>
-
-            <p className="mt-4 text-xs text-[#a39a94]">
-              GlamTrack · Preview
-            </p>
-          </div>
-      </aside>
-
-      <section className="min-w-0 flex-1 p-5 sm:p-8 md:ml-64 md:p-10">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#eae4df] pb-7">
           <div>
             <p className="text-sm text-[#827873]">Your workspace / Overview</p>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-              Good morning
+              {greeting}
             </h1>
             <p className="mt-2 text-sm text-[#827873]">
               Here&apos;s what&apos;s happening with your business.
             </p>
           </div>
 
-          <NewBookingButton />
         </header>
 
-        <div className="mt-6 rounded-xl border border-[#ead8d5] bg-[#f8efeb] px-4 py-3 text-sm text-[#80565a]">
-          <span className="font-semibold">Preview mode</span>
-          <span className="ml-2">
-            The figures and appointments below are sample data, not real
-            business records.
-          </span>
-        </div>
+        <OverviewCreateActions clients={clientOptions} services={serviceOptions} />
 
         <section aria-label="Business summary" className="mt-7">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold">Business overview</h2>
-            <span className="text-xs text-[#827873]">Sample figures</span>
+            <span className="text-xs text-[#827873]">Your account</span>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -283,6 +272,77 @@ export default async function Home() {
           </div>
         </section>
 
+        <section className="mt-10" aria-label="Analytics overview">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold">Analytics overview</h2>
+              <p className="mt-1 text-sm text-[#827873]">
+                Revenue, bookings, and client growth over the last 12 months.
+              </p>
+            </div>
+            <Link href="/analytics" className="text-sm font-medium text-[#914b57] hover:underline">
+              View full analytics
+            </Link>
+          </div>
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-5">
+            {[
+              {
+                label: "12-month revenue",
+                value: formatNaira(revenueAnalytics.reduce((sum, month) => sum + month.revenue, 0)),
+              },
+              {
+                label: "Bookings",
+                value: bookingAnalytics.reduce((sum, month) => sum + month.total, 0).toLocaleString("en-NG"),
+              },
+              {
+                label: "Completed",
+                value: bookingAnalytics.reduce((sum, month) => sum + month.completed, 0).toLocaleString("en-NG"),
+              },
+              {
+                label: "Cancelled",
+                value: bookingAnalytics.reduce((sum, month) => sum + month.cancelled, 0).toLocaleString("en-NG"),
+              },
+              {
+                label: "Top service",
+                value: serviceAnalytics[0]?.serviceName ?? "No services yet",
+              },
+            ].map((metric) => (
+              <article key={metric.label} className="min-w-0 rounded-2xl border border-[#eae4df] bg-white p-3 sm:p-5">
+                <p className="text-sm text-[#827873]">{metric.label}</p>
+                <p className="mt-2 break-words text-lg font-semibold tracking-tight sm:mt-3 sm:text-xl">{metric.value}</p>
+              </article>
+            ))}
+          </div>
+          <AnalyticsCharts
+            revenue={revenueAnalytics}
+            bookingStats={bookingAnalytics}
+            clientInsights={clientAnalytics}
+          />
+        </section>
+
+        <section className="mt-8" aria-label="Appointment calendar">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold">Booking calendar</h2>
+              <p className="mt-1 text-sm text-[#827873]">
+                View and schedule appointments from your overview.
+              </p>
+            </div>
+            <Link href="/bookings" className="text-sm font-medium text-[#914b57] hover:underline">
+              Manage bookings
+            </Link>
+          </div>
+          <BookingCalendar
+            bookings={calendarRows.map((booking) => ({
+              ...booking,
+              startsAt: new Date(booking.startsAt).toISOString(),
+              endsAt: new Date(booking.endsAt).toISOString(),
+            }))}
+            clients={clientOptions}
+            services={serviceOptions}
+          />
+        </section>
+
         <section
           id="appointments"
           className="mt-8 overflow-hidden rounded-2xl border border-[#eae4df] bg-white"
@@ -297,9 +357,10 @@ export default async function Home() {
             <ViewAllButton />
           </div>
 
-          <div className="hidden grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_100px_110px] gap-4 bg-[#fcfbf9] px-6 py-3 text-xs font-medium text-[#827873] sm:grid">
+          <div className="hidden grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_110px_85px_100px] gap-3 bg-[#fcfbf9] px-6 py-3 text-xs font-medium text-[#827873] sm:grid sm:gap-4">
             <span>Client</span>
             <span>Service</span>
+            <span>Date</span>
             <span>Time</span>
             <span>Status</span>
           </div>
@@ -320,6 +381,12 @@ export default async function Home() {
                     minute: "2-digit",
                     hour12: true,
                   }).format(new Date(booking.startsAt));
+                  const date = new Intl.DateTimeFormat("en-NG", {
+                    timeZone: "Africa/Lagos",
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  }).format(new Date(booking.startsAt));
 
                   const statusLabel =
                     booking.status === "confirmed" ? "Confirmed" : "Scheduled";
@@ -327,7 +394,7 @@ export default async function Home() {
                   return (
                     <article
                       key={booking.id}
-                      className="grid gap-3 p-5 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_100px_110px] sm:items-center sm:gap-4 sm:px-6"
+                      className="grid gap-3 p-5 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_110px_85px_100px] sm:items-center sm:gap-4 sm:px-6"
                     >
                       <div className="flex items-center gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-xs font-semibold text-rose-800">
@@ -335,6 +402,9 @@ export default async function Home() {
                         </span>
                         <div>
                           <p className="text-sm font-medium">{booking.clientName}</p>
+                          <p className="mt-1 text-xs text-[#827873] sm:hidden">
+                            {date} · {time}
+                          </p>
                           <p className="mt-1 text-xs text-[#827873] sm:hidden">
                             {booking.serviceName}
                           </p>
@@ -345,7 +415,9 @@ export default async function Home() {
                         {booking.serviceName}
                       </p>
 
-                      <p className="text-sm text-[#716964]">{time}</p>
+                      <p className="hidden text-sm text-[#716964] sm:block">{date}</p>
+
+                      <p className="hidden text-sm text-[#716964] sm:block">{time}</p>
 
                       <span
                         className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${
@@ -373,9 +445,10 @@ export default async function Home() {
         </section>
 
         <footer className="py-8 text-center text-xs text-[#a39a94]">
-          GlamTrack · Built for your beauty business
+          AdornedByElla · Built for your beauty business
         </footer>
-      </section>
-    </main>
+
+      </main>
+    </DashboardShell>
   );
 }

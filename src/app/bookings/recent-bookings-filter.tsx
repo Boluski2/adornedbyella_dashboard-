@@ -185,7 +185,44 @@ const filteredBookings = recentBookings.filter((booking) => {
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+          <div className="space-y-3 p-1 lg:hidden">
+            {filteredBookings.map((booking) => (
+              <article
+                key={booking.id}
+                className="min-w-0 rounded-xl border border-[#f0ebe7] bg-white p-4"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="break-words font-semibold text-[#272321]">{booking.clientName}</h3>
+                    <p className="mt-1 break-words text-sm text-[#716964]">{booking.serviceName}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-[#f5e8e9] px-3 py-1 text-xs font-medium capitalize text-[#8f4b57]">
+                    {booking.status.replace("_", " ")}
+                  </span>
+                </div>
+                <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-[#f0ebe7] pt-3">
+                  <div>
+                    <dt className="text-xs text-[#a39a94]">Date &amp; time</dt>
+                    <dd className="mt-1 text-sm text-[#514a46]">{formatDate(new Date(booking.startsAt))}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-[#a39a94]">Price</dt>
+                    <dd className="mt-1 text-sm font-medium text-[#514a46]">{formatPrice(booking.priceKobo)}</dd>
+                  </div>
+                </dl>
+                <div className="mt-4 flex flex-wrap items-start gap-3 border-t border-[#f0ebe7] pt-3">
+                  {booking.status !== "cancelled" &&
+                    booking.status !== "completed" &&
+                    booking.status !== "no_show" && (
+                      <CancelBookingButton bookingId={booking.id} />
+                    )}
+                  <BookingStatusControl bookingId={booking.id} status={booking.status} />
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-[650px] text-left text-sm">
             <thead>
               <tr className="border-b border-[#eae4df] text-[#827873]">
@@ -238,7 +275,8 @@ const filteredBookings = recentBookings.filter((booking) => {
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </>
   );

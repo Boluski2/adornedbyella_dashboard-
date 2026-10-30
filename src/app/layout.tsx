@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AdornedByElla | Beauty Business Manager",
   description:
-    "Manage beauty appointments, clients, services, and business performance with GlamTrack.",
+    "Manage beauty appointments, clients, services, and business performance with AdornedByElla.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

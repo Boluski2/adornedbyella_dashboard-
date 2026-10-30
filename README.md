@@ -1,6 +1,6 @@
 # AdornedByElla
 
-AdornedByElla is a beauty-business management app branded in the interface as **GlamTrack**. It is built for beauty professionals to manage client information, appointments, and services.
+AdornedByElla is a beauty-business management app for beauty professionals to manage client information, appointments, and services.
 
 The app includes account registration and sign-in, an authenticated dashboard, and database-backed client, service, booking, and analytics pages. Business records and dashboard metrics are scoped to the signed-in account.
 

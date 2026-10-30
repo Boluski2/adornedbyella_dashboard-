@@ -38,7 +38,6 @@ export default function ServiceEditForm({
 
   useEffect(() => {
     if (state.success) {
-      setOpen(false);
       window.location.reload();
     }
   }, [state.success]);
@@ -87,7 +86,7 @@ export default function ServiceEditForm({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor={`edit-duration-${service.id}`} className="mb-1.5 block text-sm font-medium">
                 Duration (minutes)

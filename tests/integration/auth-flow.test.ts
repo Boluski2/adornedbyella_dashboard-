@@ -86,7 +86,7 @@ describe("Better Auth integration", () => {
     const signupResponse = await authRequest("/sign-up/email", {
       method: "POST",
       body: {
-        name: "GlamTrack Integration Test",
+        name: "AdornedByElla Integration Test",
         email,
         password,
       },

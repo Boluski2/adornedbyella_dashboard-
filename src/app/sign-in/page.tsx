@@ -41,23 +41,23 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#faf8f5] px-5 py-12 text-[#272321]">
-      <section className="w-full max-w-md rounded-3xl border border-[#eae4df] bg-white p-7 shadow-sm sm:p-9">
+    <main className="flex min-h-screen items-center justify-center bg-[#faf8f5] px-4 py-8 text-[#272321] sm:px-6 sm:py-12">
+      <section className="w-full max-w-md rounded-3xl border border-[#eae4df] bg-white p-5 shadow-sm sm:p-8 lg:p-9">
         <Link href="/" className="flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#a65d69] text-xl text-white">
             G
           </span>
           <span className="text-xl font-semibold tracking-tight">
-            GlamTrack
+            AdornedByElla
           </span>
         </Link>
 
-        <p className="mt-9 text-sm font-medium text-[#a65d69]">
+        <p className="mt-7 text-sm font-medium text-[#a65d69] sm:mt-9">
           WELCOME BACK
         </p>
 
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          Sign in to GlamTrack
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+          Sign in to AdornedByElla
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-[#827873]">
@@ -121,7 +121,7 @@ export default function SignInPage() {
         </form>
 
         <p className="mt-6 text-center text-sm text-[#827873]">
-          New to GlamTrack?{" "}
+          New to AdornedByElla?{" "}
           <Link
             href="/sign-up"
             className="font-medium text-[#914b57] hover:underline"

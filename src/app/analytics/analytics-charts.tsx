@@ -45,7 +45,7 @@ type AnalyticsChartsProps = {
 };
 
 const panelClassName =
-  "rounded-2xl border border-[#eae4df] bg-white p-5 shadow-sm shadow-[#35251e]/[0.03] sm:p-6";
+  "min-w-0 rounded-2xl border border-[#eae4df] bg-white p-5 shadow-sm shadow-[#35251e]/[0.03] sm:p-6";
 
 const tooltipStyle = {
   border: "1px solid #eae4df",
@@ -194,8 +194,8 @@ export default function AnalyticsCharts({
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <section className={panelClassName}>
+      <div className="grid min-w-0 gap-6 xl:grid-cols-2">
+        <section className={`${panelClassName} xl:col-span-2`}>
           <PanelHeading
             eyebrow="Appointments"
             title="Booking activity"

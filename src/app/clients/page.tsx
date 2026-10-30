@@ -9,6 +9,7 @@ import { clients } from "@/lib/db/app-schema";
 import ClientForm from "./client-form";
 import ClientEditForm from "./client-edit-form";
 import ClientDeleteButton from "./client-delete-button";
+import BackToOverview from "../back-to-overview";
 
 export default async function ClientsPage({
   searchParams,
@@ -52,14 +53,9 @@ export default async function ClientsPage({
     .orderBy(desc(clients.createdAt));
 
   return (
-    <main className="min-h-screen bg-[#faf8f5] px-5 py-10 text-[#272321] sm:px-8">
+    <main className="min-h-screen bg-[#faf8f5] px-4 py-6 text-[#272321] sm:px-8 sm:py-10">
       <div className="mx-auto max-w-6xl">
-        <a
-          href="/"
-          className="text-sm text-[#914b57] hover:underline"
-        >
-          ← Back to dashboard
-        </a>
+        <BackToOverview />
 
         <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -155,7 +151,7 @@ export default async function ClientsPage({
               <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#827873]">
                 {searchTerm
                   ? `No clients match "${searchTerm}". Try another name, email, or phone number.`
-                  : "Your client records will appear here when you start adding customers to GlamTrack."}
+                  : "Your client records will appear here when you start adding customers to AdornedByElla."}
               </p>
 
               {searchTerm && (
@@ -168,7 +164,44 @@ export default async function ClientsPage({
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              <div className="space-y-3 p-4 lg:hidden">
+                {clientRecords.map((client) => (
+                  <article
+                    key={client.id}
+                    className="min-w-0 rounded-xl border border-[#f0ebe7] bg-white p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="break-words font-semibold">{client.name}</h3>
+                        <p className="mt-1 text-xs text-[#a39a94]">
+                          Added {client.createdAt.toLocaleDateString("en-NG", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            timeZone: "Africa/Lagos",
+                          })}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <ClientEditForm client={client} />
+                        <ClientDeleteButton clientId={client.id} clientName={client.name} />
+                      </div>
+                    </div>
+                    <dl className="mt-4 grid min-w-0 gap-3 border-t border-[#f0ebe7] pt-3 text-sm">
+                      <div className="min-w-0">
+                        <dt className="text-xs text-[#a39a94]">Email</dt>
+                        <dd className="mt-0.5 break-all text-[#514a46]">{client.email || "—"}</dd>
+                      </div>
+                      <div className="min-w-0">
+                        <dt className="text-xs text-[#a39a94]">Phone</dt>
+                        <dd className="mt-0.5 break-words text-[#514a46]">{client.phone || "—"}</dd>
+                      </div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto lg:block">
               <table className="w-full min-w-[700px] text-left text-sm">
                 <thead className="border-b border-[#eae4df] bg-[#fcfbf9] text-[#827873]">
                   <tr>
@@ -221,12 +254,13 @@ export default async function ClientsPage({
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </>
           )}
         </section>
 
         <footer className="py-8 text-center text-xs text-[#a39a94]">
-          GlamTrack · Built for your beauty business
+          AdornedByElla · Built for your beauty business
         </footer>
       </div>
     </main>

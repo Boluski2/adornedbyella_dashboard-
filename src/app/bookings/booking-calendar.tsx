@@ -162,6 +162,11 @@ const [statusFilter, setStatusFilter] =
     );
   }, [selectedDate]);
 
+  const mobileMonthDays = useMemo(() => {
+    const start = startOfWeek(selectedDate);
+    return Array.from({ length: 7 }, (_, index) => addDays(start, index));
+  }, [selectedDate]);
+
   const visibleDays = useMemo(() => {
     if (view === "day") return [dayStart(selectedDate)];
 
@@ -203,30 +208,28 @@ const [statusFilter, setStatusFilter] =
   const status = booking.status.replace("_", " ");
 
   return (
-    <article
+    <button
+      type="button"
       key={booking.id}
-      role="button"
-      tabIndex={0}
       aria-label={`View appointment for ${booking.clientName}`}
       onClick={(event) => {
         event.stopPropagation();
         setSelectedBooking(booking);
       }}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          event.stopPropagation();
-          setSelectedBooking(booking);
-        }
-      }}
-      className={`cursor-pointer rounded-lg border p-2 transition hover:shadow-sm ${statusStyles[booking.status] ?? "border-[#eae4df] bg-[#faf8f5] text-[#514a46]"}`}
+      className={`block w-full min-w-0 overflow-hidden rounded-lg border p-1.5 text-left transition hover:shadow-sm sm:p-2 ${statusStyles[booking.status] ?? "border-[#eae4df] bg-[#faf8f5] text-[#514a46]"}`}
     >
-      <p className="text-xs font-semibold">
+      <p className="truncate text-[10px] font-semibold sm:text-xs">
         {formatTime(new Date(booking.startsAt))}
         {compact ? "" : ` – ${formatTime(new Date(booking.endsAt))}`}
       </p>
 
-      <p className="mt-1 text-xs font-medium">{booking.clientName}</p>
+      {compact ? (
+        <p className="mt-1 hidden truncate text-xs font-medium sm:block">
+          {booking.clientName}
+        </p>
+      ) : (
+        <p className="mt-1 truncate text-xs font-medium">{booking.clientName}</p>
+      )}
 
       {!compact && (
         <>
@@ -234,12 +237,12 @@ const [statusFilter, setStatusFilter] =
           <p className="mt-1 text-[11px] capitalize opacity-80">{status}</p>
         </>
       )}
-    </article>
+    </button>
   );
 }
 
   return (
-    <section className="rounded-2xl border border-[#eae4df] bg-white p-4 shadow-sm sm:p-6">
+    <section className="min-w-0 overflow-hidden rounded-2xl border border-[#eae4df] bg-white p-3 shadow-sm sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#a65d69]">
@@ -257,7 +260,7 @@ const [statusFilter, setStatusFilter] =
               type="button"
               onClick={() => setView(mode)}
               aria-pressed={view === mode}
-              className={`rounded-lg px-3 py-2 text-sm capitalize ${
+              className={`rounded-lg px-2.5 py-2 text-xs capitalize sm:px-3 sm:text-sm ${
                 view === mode
                   ? "bg-[#a65d69] text-white"
                   : "text-[#827873] hover:bg-[#faf8f5]"
@@ -335,11 +338,11 @@ const [statusFilter, setStatusFilter] =
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-7 border-b border-[#eae4df]">
+      <div className="mt-5 hidden grid-cols-7 border-b border-[#eae4df] sm:grid">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div
             key={day}
-            className="px-1 py-3 text-center text-xs font-medium text-[#827873]"
+            className="px-0.5 py-2 text-center text-[10px] font-medium text-[#827873] sm:px-1 sm:py-3 sm:text-xs"
           >
             {day}
           </div>
@@ -347,7 +350,93 @@ const [statusFilter, setStatusFilter] =
       </div>
 
       {view === "month" ? (
-        <div className="grid grid-cols-7">
+        <>
+        <div className="mt-4 sm:hidden">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              aria-label="Previous week"
+              onClick={() => setSelectedDate((date) => addDays(date, -7))}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#eae4df] text-lg text-[#716964]"
+            >
+              ‹
+            </button>
+            <p className="min-w-0 truncate text-center text-xs font-medium text-[#827873]">
+              {formatLongDate(mobileMonthDays[0])} – {formatLongDate(mobileMonthDays[6])}
+            </p>
+            <button
+              type="button"
+              aria-label="Next week"
+              onClick={() => setSelectedDate((date) => addDays(date, 7))}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#eae4df] text-lg text-[#716964]"
+            >
+              ›
+            </button>
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+          {mobileMonthDays.map((date) => {
+            const key = dateKey(date);
+            const dayBookings = groupedBookings.get(key) ?? [];
+            const isSelected = key === dateKey(selectedDate);
+            const isToday = key === todayKey;
+
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-label={`Select ${formatLongDate(date)}; ${dayBookings.length} appointments`}
+                aria-pressed={isSelected}
+                onClick={() => setSelectedDate(date)}
+                className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-2 text-center ${
+                  isSelected
+                    ? "bg-[#a65d69] text-white"
+                    : "border border-[#eae4df] bg-white text-[#514a46]"
+                }`}
+              >
+                <span className="text-[10px]">{new Intl.DateTimeFormat("en-NG", { weekday: "short", timeZone: "UTC" }).format(date)}</span>
+                <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${isToday && !isSelected ? "bg-[#f5e8e9] text-[#914b57]" : ""}`}>
+                  {date.getUTCDate()}
+                </span>
+                <span className="min-h-3 text-[9px] leading-3">
+                  {dayBookings.length ? `${dayBookings.length} appt${dayBookings.length === 1 ? "" : "s"}` : " "}
+                </span>
+              </button>
+            );
+          })}
+          </div>
+        </div>
+
+        <section className="mt-3 rounded-xl border border-[#eae4df] bg-white p-4 sm:hidden">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-[#272321]">{formatLongDate(selectedDate)}</h3>
+              <p className="mt-1 text-xs text-[#827873]">
+                {(groupedBookings.get(dateKey(selectedDate)) ?? []).length} appointments
+              </p>
+            </div>
+            {dateKey(selectedDate) >= todayKey && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBookingDateTime(`${dateKey(selectedDate)}T09:00`);
+                  setSelectedBooking(null);
+                }}
+                className="rounded-lg bg-[#a65d69] px-3 py-2 text-xs font-medium text-white hover:bg-[#914b57]"
+              >
+                + Add booking
+              </button>
+            )}
+          </div>
+          <div className="mt-3 space-y-2 border-t border-[#f0ebe7] pt-3">
+            {(groupedBookings.get(dateKey(selectedDate)) ?? []).length ? (
+              (groupedBookings.get(dateKey(selectedDate)) ?? []).map((booking) => renderBooking(booking))
+            ) : (
+              <p className="text-sm text-[#827873]">No appointments for this date.</p>
+            )}
+          </div>
+        </section>
+
+        <div className="hidden min-w-0 grid-cols-7 sm:grid">
           {monthDays.map((date) => {
             const key = dateKey(date);
             const isCurrentMonth =
@@ -356,19 +445,20 @@ const [statusFilter, setStatusFilter] =
             const dayBookings = groupedBookings.get(key) ?? [];
 
             return (
-              <button
+              <div
                 key={key}
-                type="button"
-                onClick={() => {
-                  setSelectedDate(date);
-                  setView("day");
-                }}
-                className={`min-h-24 border-b border-r border-[#f0ebe7] p-1 text-left transition hover:bg-[#faf8f5] sm:min-h-32 sm:p-2 ${
+                className={`min-w-0 min-h-16 overflow-hidden border-b border-r border-[#f0ebe7] p-0.5 sm:min-h-32 sm:p-2 ${
                   isCurrentMonth ? "" : "bg-[#faf8f5]/60"
                 }`}
               >
-                <span
-                  className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs ${
+                <button
+                  type="button"
+                  aria-label={`Show appointments for ${formatLongDate(date)}`}
+                  onClick={() => {
+                    setSelectedDate(date);
+                    setView("day");
+                  }}
+                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] sm:h-7 sm:w-7 sm:text-xs ${
                     isToday
                       ? "bg-[#a65d69] font-semibold text-white"
                       : isCurrentMonth
@@ -377,9 +467,9 @@ const [statusFilter, setStatusFilter] =
                   }`}
                 >
                   {date.getUTCDate()}
-                </span>
+                </button>
 
-                <div className="mt-1 space-y-1">
+                <div className="mt-0.5 min-w-0 space-y-0.5 sm:mt-1 sm:space-y-1">
                 {dayBookings.slice(0, 2).map((booking) =>
                     renderBooking(booking, true),
                 )}
@@ -391,24 +481,26 @@ const [statusFilter, setStatusFilter] =
                 )}
 
                 {key >= todayKey && (
-                <span
-                    onClick={(event) => {
-                    event.stopPropagation();
+                <button
+                    type="button"
+                    onClick={() => {
                     setBookingDateTime(`${key}T09:00`);
                     setSelectedDate(date);
                     setSelectedBooking(null);
                     setView("day");
                     }}
-                    className="block cursor-pointer rounded-md px-1 py-1 text-[10px] font-medium text-[#914b57] hover:bg-[#f5e8e9]"
+                    className="block w-full truncate rounded-md px-0.5 py-1 text-left text-[9px] font-medium text-[#914b57] hover:bg-[#f5e8e9] sm:px-1 sm:text-[10px]"
                 >
-                    + New appointment
-                </span>
+                    <span className="sm:hidden">+ Add</span>
+                    <span className="hidden sm:inline">+ New appointment</span>
+                </button>
                 )}
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
+        </>
       ) : (
         <div className="grid grid-cols-1 gap-3 pt-3 sm:grid-cols-2 lg:grid-cols-3">
           {visibleDays.map((date) => {

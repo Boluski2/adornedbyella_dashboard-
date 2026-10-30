@@ -8,10 +8,10 @@ import { auth } from "@/lib/db/auth";
 import { db } from "@/lib/db";
 import { bookings, clients, services } from "@/lib/db/app-schema";
 import BookingForm from "./booking-form";
-import CancelBookingButton from "./cancel-booking-button";
-import BookingStatusControl from "./booking-status-control";
 import BookingCalendar from "./booking-calendar";
 import RecentBookingsFilter from "./recent-bookings-filter";
+import ExpandableForm from "../expandable-form";
+import BackToOverview from "../back-to-overview";
 
 export default async function BookingsPage() {
   await connection();
@@ -79,21 +79,9 @@ export default async function BookingsPage() {
   priceKobo: booking.priceKobo,
     }));
 
-  const formatPrice = (priceKobo: number) =>
-    new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      maximumFractionDigits: 2,
-    }).format(priceKobo / 100);
-
-  const formatDate = (date: Date) =>
-    new Intl.DateTimeFormat("en-NG", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(date);
-
   return (
-    <main className="mx-auto max-w-6xl space-y-8 p-6 md:p-10">
+    <main className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 md:p-10">
+      <BackToOverview />
       <header>
         <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#a65d69]">
           Appointment management
@@ -110,19 +98,17 @@ export default async function BookingsPage() {
         clients={clientOptions}
         services={serviceOptions}
         />
-      <section className="rounded-2xl border border-[#eae4df] bg-white p-6 shadow-sm md:p-8">
-        <h2 className="text-xl font-semibold text-[#272321]">
-          Create a booking
-        </h2>
-        <p className="mt-1 mb-6 text-sm text-[#827873]">
-          Choose a client, service, and appointment time.
-        </p>
-
+      <ExpandableForm
+        id="new-booking"
+        buttonLabel="Add booking"
+        title="Create a booking"
+        description="Choose a client, service, and appointment time."
+      >
         <BookingForm
           clients={clientOptions}
           services={serviceOptions}
         />
-      </section>
+      </ExpandableForm>
 
       <section className="rounded-2xl border border-[#eae4df] bg-white p-6 shadow-sm md:p-8">
         <div className="mb-6">
@@ -140,7 +126,7 @@ export default async function BookingsPage() {
               No bookings yet
             </p>
             <p className="mt-2 text-sm text-[#827873]">
-              Create your first booking using the form above.
+              Use Add booking above to schedule your first appointment.
             </p>
           </div>
         ) : (

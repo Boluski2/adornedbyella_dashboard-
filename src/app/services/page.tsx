@@ -3,13 +3,14 @@ import { headers } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
-
 import { auth } from "@/lib/db/auth";
 import { db } from "@/lib/db";
 import { services } from "@/lib/db/app-schema";
 import ServiceForm from "./service-form";
 import ServiceEditForm from "./service-edit-form";
 import ServiceStatusButton from "./service-status-button";
+import ExpandableForm from "../expandable-form";
+import BackToOverview from "../back-to-overview";
 
 export default async function ServicesPage() {
   await connection();
@@ -44,11 +45,9 @@ export default async function ServicesPage() {
     }).format(priceKobo / 100);
 
   return (
-    <main className="min-h-screen bg-[#faf8f5] px-5 py-10 text-[#272321] sm:px-8">
+    <main className="min-h-screen bg-[#faf8f5] px-4 py-6 text-[#272321] sm:px-8 sm:py-10">
       <div className="mx-auto max-w-6xl">
-        <a href="/" className="text-sm text-[#914b57] hover:underline">
-          ← Back to dashboard
-        </a>
+        <BackToOverview />
 
         <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -67,17 +66,16 @@ export default async function ServicesPage() {
           </p>
         </div>
 
-        <section className="mt-8 rounded-2xl border border-[#eae4df] bg-white p-6 sm:p-8">
-          <div className="mb-6">
-            <p className="text-sm font-medium text-[#a65d69]">SERVICE MENU</p>
-            <h2 className="mt-2 text-xl font-semibold">Add a service</h2>
-            <p className="mt-2 text-sm text-[#827873]">
-              Set the price and time needed for each appointment.
-            </p>
-          </div>
-
+        <div className="mt-8">
+          <ExpandableForm
+            id="new-service"
+            buttonLabel="Add service"
+            title="Add a service"
+            description="Set the price and time needed for each appointment."
+          >
           <ServiceForm />
-        </section>
+          </ExpandableForm>
+        </div>
 
         <section className="mt-8">
           <h2 className="mb-4 text-xl font-semibold">Your services</h2>
@@ -89,8 +87,8 @@ export default async function ServicesPage() {
               </div>
               <h3 className="mt-5 text-lg font-semibold">No services yet</h3>
               <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#827873]">
-                Add your first beauty service above. It will be available to use
-                when we build appointment booking.
+                Add your first beauty service above. Active services can be
+                selected when you create a booking.
               </p>
             </div>
           ) : (
@@ -101,8 +99,8 @@ export default async function ServicesPage() {
                   className="rounded-2xl border border-[#eae4df] bg-white p-6"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-semibold">{service.name}</h3>
-                    <span className="rounded-full bg-[#f5e8e9] px-3 py-1 text-xs font-medium text-[#914b57]">
+                    <h3 className="min-w-0 break-words font-semibold">{service.name}</h3>
+                    <span className="shrink-0 rounded-full bg-[#f5e8e9] px-3 py-1 text-xs font-medium text-[#914b57]">
                       {service.isActive ? "Active" : "Inactive"}
                     </span>
                   </div>

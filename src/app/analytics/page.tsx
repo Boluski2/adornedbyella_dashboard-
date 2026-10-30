@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/analytics";
 
 import AnalyticsCharts from "./analytics-charts";
+import BackToOverview from "../back-to-overview";
 
 function formatNaira(amountInKobo: number) {
   return new Intl.NumberFormat("en-NG", {
@@ -99,8 +100,9 @@ export default async function AnalyticsPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#faf8f5] px-5 py-8 text-[#272321] sm:px-8 lg:px-10">
+    <main className="min-h-screen bg-[#faf8f5] px-4 py-6 text-[#272321] sm:px-8 sm:py-8 lg:px-10">
       <div className="mx-auto max-w-7xl">
+        <BackToOverview />
         <header className="flex flex-wrap items-end justify-between gap-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a65d69]">
@@ -135,19 +137,19 @@ export default async function AnalyticsPage() {
 
         <section
           aria-label="Performance summary"
-          className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
+          className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-5"
         >
           {summaryCards.map((card) => (
             <article
               key={card.title}
-              className="rounded-2xl border border-[#eae4df] bg-white p-5 shadow-sm shadow-[#35251e]/[0.03]"
+              className="min-w-0 rounded-2xl border border-[#eae4df] bg-white p-3 shadow-sm shadow-[#35251e]/[0.03] sm:p-5"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-[#827873]">
                     {card.title}
                   </p>
-                  <p className={`mt-3 break-words text-2xl font-semibold tracking-tight text-[#272321] ${card.valueClassName ?? ""}`}>
+                  <p className={`mt-2 break-words text-lg font-semibold tracking-tight text-[#272321] sm:mt-3 sm:text-2xl ${card.valueClassName ?? ""}`}>
                     {card.value}
                   </p>
                 </div>

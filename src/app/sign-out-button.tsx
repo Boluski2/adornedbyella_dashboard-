@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth";
 
-export default function SignOutButton() {
+export default function SignOutButton({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -37,10 +37,12 @@ export default function SignOutButton() {
         type="button"
         onClick={handleSignOut}
         disabled={loading}
-        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-[#716964] transition hover:bg-[#f5e8e9] hover:text-[#914b57] disabled:opacity-60"
+        aria-label={compact ? "Sign out" : undefined}
+        title={compact ? "Sign out" : undefined}
+        className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-[#716964] transition hover:bg-[#f5e8e9] hover:text-[#914b57] disabled:opacity-60 ${compact ? "justify-center px-2" : ""}`}
       >
         <span aria-hidden="true">↪</span>
-        {loading ? "Signing out..." : "Sign out"}
+        {!compact && (loading ? "Signing out..." : "Sign out")}
       </button>
 
       {error && (
