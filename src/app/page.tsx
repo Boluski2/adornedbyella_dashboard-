@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
@@ -18,6 +19,27 @@ import {
   getServicePerformance,
 } from "@/lib/db/analytics";
 import { getBusinessProfile } from "@/lib/db/business-profiles";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    return {
+      title: "AdornedByElla",
+      description: "Manage your beauty business with AdornedByElla.",
+    };
+  }
+
+  const profile = await getBusinessProfile(session.user.id);
+
+  return {
+    title: profile?.brandName || "AdornedByElla",
+    description:
+      profile?.slogan || "Manage your beauty business with AdornedByElla.",
+  };
+}
 
 
 function MetricCard({

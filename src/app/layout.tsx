@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { headers } from "next/headers";
-import { auth } from "@/lib/db/auth";
-import { getBusinessProfile } from "@/lib/db/business-profiles";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,26 +12,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return {
-      title: "AdornedByElla",
-      description: "Manage your beauty business with AdornedByElla.",
-    };
-  }
-
-  const profile = await getBusinessProfile(session.user.id);
-
-  return {
-    title: profile?.brandName || "AdornedByElla",
-    description:
-      profile?.slogan || "Manage your beauty business with AdornedByElla.",
-  };
-}
+export const metadata: Metadata = {
+  title: "AdornedByElla",
+  description: "Manage your beauty business with AdornedByElla.",
+};
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
