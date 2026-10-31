@@ -240,6 +240,13 @@ if (!businessProfile) {
   const totalClients = clientsResult[0]?.value ?? 0;
   const monthlyRevenueKobo = Number(revenueResult[0]?.value ?? 0);
   const activeServices = servicesResult[0]?.value ?? 0;
+  const currentMonthKey = `${year}-${String(month).padStart(2, "0")}`;
+  const currentMonthRevenue = revenueAnalytics.find(
+    (item) => item.month === currentMonthKey,
+  )?.revenue ?? 0;
+  const currentMonthBookings = bookingAnalytics.find(
+    (item) => item.month === currentMonthKey,
+  ) ?? { total: 0, completed: 0, cancelled: 0 };
 
   const formatNaira = (kobo: number) =>
     new Intl.NumberFormat("en-NG", {
@@ -345,6 +352,22 @@ if (!businessProfile) {
                 <p className="mt-2 break-words text-lg font-semibold tracking-tight sm:mt-3 sm:text-xl">{metric.value}</p>
               </article>
             ))}
+          </div>
+          <div className="mb-6">
+            <h3 className="mb-3 text-sm font-semibold text-[#514a46]">Current month</h3>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+              {[
+                { label: "Revenue", value: formatNaira(currentMonthRevenue) },
+                { label: "Bookings", value: currentMonthBookings.total.toLocaleString("en-NG") },
+                { label: "Completed", value: currentMonthBookings.completed.toLocaleString("en-NG") },
+                { label: "Cancelled", value: currentMonthBookings.cancelled.toLocaleString("en-NG") },
+              ].map((metric) => (
+                <article key={metric.label} className="min-w-0 rounded-2xl border border-[#eae4df] bg-white p-3 sm:p-5">
+                  <p className="text-sm text-[#827873]">{metric.label}</p>
+                  <p className="mt-2 break-words text-lg font-semibold tracking-tight sm:mt-3 sm:text-xl">{metric.value}</p>
+                </article>
+              ))}
+            </div>
           </div>
           <AnalyticsCharts
             revenue={revenueAnalytics}
