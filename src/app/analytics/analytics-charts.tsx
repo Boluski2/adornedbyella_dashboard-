@@ -31,6 +31,12 @@ type BookingItem = {
 type ClientInsights = {
   totalClients: number;
   returningClients: number;
+  topClients: {
+    clientId: string;
+    name: string;
+    totalBookings: number;
+    services: string[];
+  }[];
   newClients: {
     month: string;
     label: string;
@@ -351,6 +357,34 @@ export default function AnalyticsCharts({
                 </p>
               </div>
             </aside>
+          </div>
+
+          <div className="mt-6 rounded-xl border border-[#f0ebe7] bg-[#fcfbf9] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#a65d69]">
+              Top clients
+            </p>
+            <h3 className="mt-1 text-sm font-semibold text-[#272321]">
+              Most bookings in this period
+            </h3>
+            {clientInsights.topClients.length > 0 ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {clientInsights.topClients.map((client) => (
+                  <div key={client.clientId} className="rounded-lg border border-[#eae4df] bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-medium text-[#514a46]">{client.name}</p>
+                      <span className="shrink-0 text-xs font-semibold text-[#a65d69]">
+                        {client.totalBookings} {client.totalBookings === 1 ? "booking" : "bookings"}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-[#827873]">
+                      {client.services.join(" · ")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-[#a39a94]">Booking activity will appear here.</p>
+            )}
           </div>
         </section>
       </div>

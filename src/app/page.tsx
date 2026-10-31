@@ -135,7 +135,7 @@ if (!businessProfile) {
       .where(
         and(
           eq(bookings.ownerId, ownerId),
-          inArray(bookings.status, ["scheduled", "confirmed"]),
+          inArray(bookings.status, ["scheduled", "confirmed", "completed"]),
           gte(bookings.startsAt, dayStart),
           lt(bookings.startsAt, dayEnd),
         ),
@@ -281,7 +281,7 @@ if (!businessProfile) {
           <MetricCard
             label="Appointments today"
             value={String(todayAppointments)}
-            detail="Scheduled and confirmed"
+            detail="Scheduled, confirmed, and completed"
             symbol="▦"
           />
           <MetricCard

@@ -21,7 +21,16 @@ function formatNaira(amountInKobo: number) {
   }).format(amountInKobo / 100);
 }
 
-export default async function AnalyticsPage() {
+function getCurrentLagosPeriod() {
+  const values = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Lagos", year: "numeric", month: "2-digit",
+  }).formatToParts(new Date()).map((part) => [part.type, part.value]));
+  return { year: Number(values.year), month: Number(values.month) };
+}
+
+export default async function AnalyticsPage({
+  searchParams,
+}: { searchParams?: Promise<{ view?: string; year?: string; month?: string }> }) {
   await connection();
 
   const session = await auth.api.getSession({
@@ -33,12 +42,28 @@ export default async function AnalyticsPage() {
   }
 
   const ownerId = session.user.id;
+  const current = getCurrentLagosPeriod();
+  const params = (await searchParams) ?? {};
+  const view = params.view === "month" ? "month" : "year";
+  const requestedYear = Number(params.year);
+  const requestedMonth = Number(params.month);
+  const selectedYear = Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= current.year
+    ? requestedYear
+    : current.year;
+  const selectedMonth = Number.isInteger(requestedMonth) && requestedMonth >= 1 && requestedMonth <= 12
+    ? requestedMonth
+    : current.month;
+  const period = { year: selectedYear, ...(view === "month" ? { month: selectedMonth } : {}) };
+  const periodLabel = view === "month"
+    ? new Intl.DateTimeFormat("en-NG", { month: "long", year: "numeric" }).format(new Date(Date.UTC(selectedYear, selectedMonth - 1, 1)))
+    : String(selectedYear);
+  const yearOptions = Array.from({ length: 7 }, (_, index) => current.year - index);
   const [revenue, bookingStats, servicePerformance, clientInsights] =
     await Promise.all([
-      getMonthlyRevenue(ownerId),
-      getMonthlyBookingStats(ownerId),
-      getServicePerformance(ownerId),
-      getClientInsights(ownerId),
+      getMonthlyRevenue(ownerId, period),
+      getMonthlyBookingStats(ownerId, period),
+      getServicePerformance(ownerId, period),
+      getClientInsights(ownerId, period),
     ]);
 
   const totalRevenue = revenue.reduce(
@@ -62,7 +87,7 @@ export default async function AnalyticsPage() {
     {
       title: "Revenue",
       value: formatNaira(totalRevenue),
-      detail: "From completed appointments · 12 months",
+      detail: `From completed appointments · ${periodLabel}`,
       symbol: "₦",
       tone: "bg-[#f5e8e9] text-[#a65d69]",
     },
@@ -79,7 +104,7 @@ export default async function AnalyticsPage() {
     {
       title: "Bookings",
       value: totalBookings.toLocaleString("en-NG"),
-      detail: "Appointments in the last 12 months",
+      detail: `Appointments · ${periodLabel}`,
       symbol: "▦",
       tone: "bg-[#f5f0e8] text-[#94744b]",
     },
@@ -116,23 +141,21 @@ export default async function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="inline-flex items-center gap-2 rounded-xl border border-[#eae4df] bg-white px-4 py-2.5 text-sm font-medium text-[#514a46] shadow-sm">
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 20 20"
-              fill="none"
-              className="h-4 w-4 text-[#a65d69]"
-            >
-              <path
-                d="M6.25 2.5v2.25M13.75 2.5v2.25M3.5 7.25h13M4.25 4h11.5A1.75 1.75 0 0 1 17.5 5.75v9.5A1.75 1.75 0 0 1 15.75 17H4.25a1.75 1.75 0 0 1-1.75-1.75v-9.5A1.75 1.75 0 0 1 4.25 4Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Last 12 months
-          </div>
+          <form method="get" className="flex flex-wrap items-end gap-2 rounded-xl border border-[#eae4df] bg-white p-2 shadow-sm">
+            <label className="sr-only" htmlFor="analytics-view">Period</label>
+            <select id="analytics-view" name="view" defaultValue={view} className="rounded-lg border border-[#eae4df] px-2.5 py-2 text-sm font-medium text-[#514a46]"><option value="year">Yearly</option><option value="month">Monthly</option></select>
+            <label className="sr-only" htmlFor="analytics-year">Year</label>
+            <select id="analytics-year" name="year" defaultValue={selectedYear} className="rounded-lg border border-[#eae4df] px-2.5 py-2 text-sm font-medium text-[#514a46]">
+              {yearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
+            </select>
+            {view === "month" && <>
+              <label className="sr-only" htmlFor="analytics-month">Month</label>
+              <select id="analytics-month" name="month" defaultValue={selectedMonth} className="rounded-lg border border-[#eae4df] px-2.5 py-2 text-sm font-medium text-[#514a46]">
+                {Array.from({ length: 12 }, (_, index) => <option key={index + 1} value={index + 1}>{new Intl.DateTimeFormat("en-NG", { month: "long" }).format(new Date(Date.UTC(2020, index, 1)))}</option>)}
+              </select>
+            </>}
+            <button type="submit" className="rounded-lg bg-[#a65d69] px-3 py-2 text-sm font-semibold text-white">Apply</button>
+          </form>
         </header>
 
         <section
